@@ -21,7 +21,7 @@ A full-stack, multi-tenant Feature Flag Management System designed for SaaS plat
 
 ---
 
-## 🏛️ PoC Architecture & Roles
+## PoC Architecture & Roles
 
 The PoC comprises three scoped dashboards working together:
 
