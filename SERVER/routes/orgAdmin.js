@@ -17,18 +17,18 @@ app.post("/signup", async (req, res) => {
       })
     }
 
-    const { email, password, orgId } = req.body
+    const { email, password, orgName } = req.body
 
-    if (!email || !password || !orgId) {
+    if (!email || !password || !orgName) {
       return res.status(400).json({
         success: false,
         error: true,
         errorCode: "BAD REQUEST",
-        message: "Email, password, and orgId are required",
+        message: "Email, password, and orgName are required",
       })
     }
 
-    const org = await Org.findById(orgId).lean()
+    const org = await Org.findOne({ name: orgName }).lean()
     if (!org) {
       return res.status(404).json({
         success: false,
@@ -37,6 +37,8 @@ app.post("/signup", async (req, res) => {
         message: "Organization not found",
       })
     }
+
+    const orgId = org._id.toString()
 
     const existingAdmin = await User.findOne({ role: "ORG_ADMIN", orgId }).lean()
     if (existingAdmin) {
