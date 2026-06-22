@@ -1,7 +1,7 @@
 const express = require("express")
 const Org = require("../models/organisation")
 const User = require("../models/user")
-const { sha256 } = require("crypto-js/sha256")
+const SHA256 = require("crypto-js/sha256")
 const { generateToken, verifyToken } = require("../scripts/utils")
 const app = express.Router()
 
@@ -40,7 +40,7 @@ app.post("/login", async (req, res) => {
     if (!user) {
       user = new User({
         email,
-        password: sha256(password).toString(),
+        password: SHA256(password).toString(),
         role: "SUPER_ADMIN",
       })
       await user.save()
