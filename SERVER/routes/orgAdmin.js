@@ -222,7 +222,7 @@ app.get("/features", async (req, res) => {
     }
 
     const tokenData = await verifyToken(token, process.env.JWT_SECRET)
-    const orgAdmin = await User.findOne({ _id: tokenData.id, role: "ORG_ADMIN" }).lean()
+    const orgAdmin = await User.findOne({ _id: tokenData.id, role: "ORG_ADMIN" || "END_USER" }).lean()
     if (!orgAdmin) {
       return res.status(401).json({
         success: false,

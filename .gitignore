@@ -1,6 +1,7 @@
 SERVER/node_modules
 SERVER/package-lock.json
 SERVER/.env
+SERVER/docs
 
 CLIENT/node_modules
 CLIENT/package-lock.json
