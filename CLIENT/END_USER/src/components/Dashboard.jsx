@@ -39,6 +39,8 @@ export default function Dashboard() {
   const [sort, setSort] = useState(-1); // -1 for desc, 1 for asc
   const [sortBy, setSortBy] = useState("date");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [message, setMessage] = useState({ text: "", type: "" });
+  const [selectedKey, setSelectedKey] = useState(null);
 
   // Fetch function
   const fetchFeatures = useCallback(async () => {
@@ -78,7 +80,17 @@ export default function Dashboard() {
     } finally {
       setLoadingList(false);
     }
-  }, [token, activeSname, activeSdate, activeEdate, limit, page, sort, sortBy, refreshTrigger]);
+  }, [
+    token,
+    activeSname,
+    activeSdate,
+    activeEdate,
+    limit,
+    page,
+    sort,
+    sortBy,
+    refreshTrigger,
+  ]);
 
   // Fetch when filters or page changes
   useEffect(() => {
@@ -107,9 +119,58 @@ export default function Dashboard() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  // Toggle the selected feature flag
+  const handleToggleSelected = async () => {
+    if (!selectedKey) return;
+    setLoadingList(true);
+    setMessage({ text: "", type: "" });
+    try {
+      const res = await fetch("/api/user/toggle-feature", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "access-token": token,
+        },
+        body: JSON.stringify({
+          featureKey: selectedKey,
+          orgName: user.orgName,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to toggle feature flag");
+      }
+
+      // Update state locally in features array
+      setFeatures((prev) =>
+        prev.map((f) =>
+          f.key === selectedKey
+            ? { ...f, enabled: data.featureFlag.enabled }
+            : f,
+        ),
+      );
+
+      setMessage({
+        text: `Feature '${selectedKey}' is now ${data.featureFlag.enabled ? "enabled" : "disabled"} for organization '${user.orgName}'.`,
+        type: "success",
+      });
+    } catch (err) {
+      console.error(err);
+      setMessage({
+        text: err.message || "Failed to toggle feature flag status",
+        type: "error",
+      });
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
   // Toggle feature flag status using the end-user toggle route
   const handleToggleStatus = async (flag) => {
     setLoadingList(true);
+    setMessage({ text: "", type: "" });
     try {
       const res = await fetch("/api/user/toggle-feature", {
         method: "POST",
@@ -131,11 +192,21 @@ export default function Dashboard() {
 
       // Update state locally in features array
       setFeatures((prev) =>
-        prev.map((f) => (f._id === flag._id ? { ...f, enabled: data.featureFlag.enabled } : f))
+        prev.map((f) =>
+          f._id === flag._id ? { ...f, enabled: data.featureFlag.enabled } : f,
+        ),
       );
+
+      setMessage({
+        text: `Feature '${flag.key}' is now ${data.featureFlag.enabled ? "enabled" : "disabled"} for organization '${user.orgName}'.`,
+        type: "success",
+      });
     } catch (err) {
       console.error(err);
-      alert(err.message || "Failed to toggle feature flag status");
+      setMessage({
+        text: err.message || "Failed to toggle feature flag status",
+        type: "error",
+      });
     } finally {
       setLoadingList(false);
     }
@@ -157,9 +228,7 @@ export default function Dashboard() {
               <h1 className="text-xl font-bold text-white tracking-wide">
                 Byepo SaaS Portal
               </h1>
-              <p className="text-xs text-slate-500">
-                End User Console
-              </p>
+              <p className="text-xs text-slate-500">End User Console</p>
             </div>
           </div>
 
@@ -202,6 +271,49 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {message.text && (
+          <div
+            className={`p-4 rounded-xl border mb-6 text-sm flex items-start gap-2 ${
+              message.type === "success"
+                ? "bg-green-950/20 border-green-500/30 text-green-400"
+                : "bg-red-950/20 border-red-500/30 text-red-400"
+            }`}
+          >
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <span>{message.text}</span>
+          </div>
+        )}
+
+        {/* Action Bar for Selected Feature */}
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 bg-slate-900/35 border border-slate-800/80 p-4 rounded-xl">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Toggle Feature
+          </span>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Selected Feature:
+              </span>
+              {selectedKey ? (
+                <span className="font-mono text-xs bg-blue-950/40 text-blue-400 px-3 py-1 rounded border border-blue-500/20 font-bold">
+                  {selectedKey}
+                </span>
+              ) : (
+                <span className="text-xs text-slate-500 italic">
+                  No feature selected
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleToggleSelected}
+              disabled={!selectedKey || loadingList}
+              className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg transition-colors cursor-pointer shadow-md shadow-blue-650/10 active:scale-95"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
 
         {/* Dashboard Content Panel */}
         <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-2xl">
@@ -325,9 +437,7 @@ export default function Dashboard() {
             ) : features.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center text-slate-500 gap-2">
                 <Layers className="w-10 h-10 opacity-20" />
-                <p className="font-semibold">
-                  No feature flags registered yet
-                </p>
+                <p className="font-semibold">No feature flags registered yet</p>
                 <p className="text-xs text-slate-650">
                   Please consult your organization administrator.
                 </p>
@@ -337,9 +447,9 @@ export default function Dashboard() {
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-slate-800/80 bg-slate-950/60 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                      <th className="px-6 py-4 text-center w-12">Select</th>
                       <th className="px-6 py-4">Flag Key</th>
                       <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4 text-center">Toggle State</th>
                       <th className="px-6 py-4">Created Date</th>
                     </tr>
                   </thead>
@@ -349,8 +459,22 @@ export default function Dashboard() {
                         key={flag._id}
                         className="hover:bg-slate-900/30 transition-colors"
                       >
+                        <td className="px-6 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedKey === flag.key}
+                            onChange={() =>
+                              setSelectedKey(
+                                selectedKey === flag.key ? null : flag.key,
+                              )
+                            }
+                            className="w-4 h-4 rounded text-blue-600 bg-slate-950 border-slate-800 focus:ring-blue-550/40 focus:ring-2 cursor-pointer"
+                          />
+                        </td>
                         <td className="px-6 py-4 font-semibold text-white">
-                          <span className="font-mono text-xs bg-slate-950 px-2 py-1 rounded border border-slate-900">{flag.key}</span>
+                          <span className="font-mono text-xs bg-slate-950 px-2 py-1 rounded border border-slate-900">
+                            {flag.key}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           {flag.enabled ? (
@@ -362,18 +486,6 @@ export default function Dashboard() {
                               Disabled
                             </span>
                           )}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() => handleToggleStatus(flag)}
-                            className="focus:outline-none text-slate-400 hover:text-white transition-colors"
-                          >
-                            {flag.enabled ? (
-                              <ToggleRight className="w-8 h-8 text-green-500 cursor-pointer" />
-                            ) : (
-                              <ToggleLeft className="w-8 h-8 text-slate-650 cursor-pointer" />
-                            )}
-                          </button>
                         </td>
                         <td className="px-6 py-4 text-slate-400">
                           {new Date(flag.created).toLocaleDateString(
@@ -397,9 +509,8 @@ export default function Dashboard() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
               <span className="text-xs text-slate-500">
-                Showing Page{" "}
-                <strong className="text-slate-300">{page}</strong> of{" "}
-                <strong className="text-slate-300">{totalPages}</strong> (
+                Showing Page <strong className="text-slate-300">{page}</strong>{" "}
+                of <strong className="text-slate-300">{totalPages}</strong> (
                 {totalCount} total)
               </span>
 
@@ -412,9 +523,7 @@ export default function Dashboard() {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() =>
-                    setPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                   className="p-2 border border-slate-800 hover:border-slate-700 bg-slate-950 hover:bg-slate-900 text-slate-400 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
