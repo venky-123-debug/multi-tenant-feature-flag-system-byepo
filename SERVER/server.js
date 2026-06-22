@@ -49,6 +49,7 @@ const routes = require("./routes/api")
 app.use("/", routes)
 
 async function startup() {
+  await mongoose.connect(process.env.MONGODB_CONNECTION)
   try {
     app.listen(process.env.PORT, () => {
       console.log(`SERVER STARTED ON : ${process.env.PORT}`)
