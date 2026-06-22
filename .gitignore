@@ -1,0 +1,31 @@
+SERVER/node_modules
+SERVER/package-lock.json
+SERVER/.env
+
+CLIENT/node_modules
+CLIENT/package-lock.json
+CLIENT/.env
+CLIENT/dist
+CLIENT/public/assets
+
+# Firebase
+.firebase/
+
+# Next.js
+.next/
+out/
+
+# Testing
+**/*.test.js
+**/*.test.jsx
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.js
+**/*.spec.jsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# IDE
+.vscode/
+.idea/
+*.swp
