@@ -6,6 +6,17 @@ require("dotenv").config()
 
 const app = express()
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*")
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, access-token, x-access-token")
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+  
+  if (req.method === "OPTIONS") {
+    return res.status(200).end()
+  }
+  next()
+})
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 

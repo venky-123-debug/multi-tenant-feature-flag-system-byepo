@@ -26,18 +26,31 @@ app.post("/login", async (req, res) => {
       })
     }
 
-    let superAdminCount = await User.find({ role: "SUPER_ADMIN" }).countDocuments()
-    if (superAdminCount >= 1) {
-      return res.status(403).json({
-        success: false,
-        error: true,
-        errorCode: "FORBIDDEN",
-        message: "Super admin already exists",
-      })
-    }
-
     let user = await User.findOne({ email })
-    if (!user) {
+    
+    if (user) {
+      // Admin is already present. Verify password.
+      if (user.password !== SHA256(password).toString()) {
+        return res.status(401).json({
+          success: false,
+          error: true,
+          errorCode: "UNAUTHORIZED",
+          message: "Invalid credentials",
+        })
+      }
+    } else {
+      // User not found. Check if another Super Admin already exists.
+      let superAdminCount = await User.find({ role: "SUPER_ADMIN" }).countDocuments()
+      if (superAdminCount >= 1) {
+        return res.status(403).json({
+          success: false,
+          error: true,
+          errorCode: "FORBIDDEN",
+          message: "Super admin already exists with a different email address",
+        })
+      }
+
+      // No Super Admin exists in the database. Create the first one.
       user = new User({
         email,
         password: SHA256(password).toString(),
@@ -59,6 +72,11 @@ app.post("/login", async (req, res) => {
     return res.status(200).json({
       success: true,
       token,
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role
+      }
     })
   } catch (error) {
     console.error("Super Admin Login Error:", error)

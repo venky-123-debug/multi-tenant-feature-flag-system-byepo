@@ -3,11 +3,21 @@ SERVER/package-lock.json
 SERVER/.env
 SERVER/docs
 
-CLIENT/node_modules
-CLIENT/package-lock.json
-CLIENT/.env
-CLIENT/dist
-CLIENT/public/assets
+CLIENT/SUPER_ADMIN/node_modules
+CLIENT/SUPER_ADMIN/package-lock.json
+CLIENT/SUPER_ADMIN/.env
+CLIENT/SUPER_ADMIN/dist
+CLIENT/SUPER_ADMIN/public/
+CLIENT/ORG_ADMIN/node_modules
+CLIENT/ORG_ADMIN/package-lock.json
+CLIENT/ORG_ADMIN/.env
+CLIENT/ORG_ADMIN/dist
+CLIENT/ORG_ADMIN/public/
+CLIENT/END_USER/node_modules
+CLIENT/END_USER/package-lock.json
+CLIENT/END_USER/.env
+CLIENT/END_USER/dist
+CLIENT/END_USER/public/
 
 # Firebase
 .firebase/
