@@ -111,12 +111,16 @@ app.post("/login", async (req, res) => {
       })
     }
 
+    const org = await Org.findById(user.orgId).lean()
+    const orgName = org ? org.name : ""
+
     const token = await generateToken(
       {
         id: user._id.toString(),
         email: user.email,
         role: user.role,
         orgId: user.orgId,
+        orgName,
       },
       process.env.JWT_SECRET,
       Number(process.env.JWT_DURATION) || 86400,
